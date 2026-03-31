@@ -1,13 +1,26 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --text-primary: #111827;
+  --text-muted: #6B7280;
+  --accent: #0D9488;
+  --border: #E5E4DF;
+  --status-green: #16a34a;
+  --status-amber: #d97706;
+  --status-red: #dc2626;
+  --color-t1: #E63946;
+  --color-t4: #2563EB;
+  --color-t5: #0D9488;
+  --color-t7: #D97706;
+  --color-t8: #7C3AED;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html {
@@ -22,19 +35,11 @@ body {
 
 body {
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-outfit), "Helvetica Neue", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
 }
 
 a {
@@ -42,8 +47,19 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

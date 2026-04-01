@@ -1,10 +1,7 @@
 name: Collect JFK Wait Times
 
 on:
-  schedule:
-    # Every 15 minutes. The script skips midnight–5am ET if not on :00 or :30.
-    - cron: "*/15 * * * *"
-  workflow_dispatch: # allow manual trigger
+  workflow_dispatch: # triggered by cron-job.org every 15 min via GitHub API
 
 jobs:
   collect:

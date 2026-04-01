@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Newark (EWR)
-// Triggered by cron-job.org webhook every 15 minutes
-
-const TERMINALS = ["A", "B", "C"];
+// Triggered by cron-job.org webhook every 20 minutes
+// Terminal B has 3 separate checkpoints: B1 (gates 40-49), B2 (51-57), B3 (60-68)
 
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
@@ -58,7 +57,7 @@ async function main() {
           role: "user",
           content: `Extract Newark Liberty International Airport (EWR) TSA security wait times. Return ONLY this JSON format:
 
-{"A":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"C":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
+{"A":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B1":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B2":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B3":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"C":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
 
 Rules:
 - "general" = standard screening wait in minutes (integer)
@@ -68,6 +67,7 @@ Rules:
 - "No Wait" or "0" = 0
 - Range like "15-30" = use higher number
 - Newark has 3 terminals: A, B, C
+- Terminal B has 3 separate security checkpoints by gate range: B1 (gates 40-49), B2 (gates 51-57), B3 (gates 60-68)
 
 TEXT:
 ${rawText}`,
@@ -94,13 +94,19 @@ ${rawText}`,
   }
 
   // Build flat row for Supabase
-  const row = {};
-  for (const t of TERMINALS) {
-    const d = parsed[t] || {};
-    const key = `t${t.toLowerCase()}`;
-    row[`${key}_general`] = typeof d.general === "number" ? d.general : null;
-    row[`${key}_precheck`] = typeof d.precheck === "number" ? d.precheck : null;
-  }
+  const num = (v) => (typeof v === "number" ? v : null);
+  const row = {
+    ta_general:   num(parsed.A?.general),
+    ta_precheck:  num(parsed.A?.precheck),
+    tb1_general:  num(parsed.B1?.general),
+    tb1_precheck: num(parsed.B1?.precheck),
+    tb2_general:  num(parsed.B2?.general),
+    tb2_precheck: num(parsed.B2?.precheck),
+    tb3_general:  num(parsed.B3?.general),
+    tb3_precheck: num(parsed.B3?.precheck),
+    tc_general:   num(parsed.C?.general),
+    tc_precheck:  num(parsed.C?.precheck),
+  };
 
   // Step 3: Supabase insert via REST API
   const insertRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/newark_wait_times`, {

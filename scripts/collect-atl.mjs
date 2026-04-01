@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Atlanta Hartsfield-Jackson (ATL)
 // Triggered by cron-job.org webhook every 20 minutes
-// Checkpoints: North (concourses A-D), South (concourses E-F), International Terminal
+// Domestic checkpoints: Main, North, Lower North, South, PreCheck Only
+// International checkpoint: Main
+// NOTE: atl.com uses Cloudflare — if scraping fails, may need Firecrawl's stealth mode
 
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
@@ -46,7 +48,7 @@ async function main() {
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [
         {
           role: "system",
@@ -57,7 +59,7 @@ async function main() {
           role: "user",
           content: `Extract Hartsfield-Jackson Atlanta International Airport (ATL) TSA security wait times. Return ONLY this JSON format:
 
-{"North":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"South":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"International":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
+{"Domestic_Main":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"Domestic_North":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"Domestic_Lower_North":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"Domestic_South":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"Domestic_PreCheck_Only":{"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"Intl_Main":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
 
 Rules:
 - "general" = standard screening wait in minutes (integer)
@@ -66,8 +68,9 @@ Rules:
 - Use null if unknown or not listed
 - "No Wait" or "0" = 0
 - Range like "15-30" = use higher number
-- ATL has a North checkpoint (serving concourses A, B, C, D), South checkpoint (serving concourses E, F), and International Terminal checkpoint
-- Checkpoint names may appear as "North", "South", "International", or similar variants — map them accordingly
+- ATL domestic checkpoints: Main, North, Lower North, South, PreCheck Only (no standard lane)
+- ATL international checkpoint: Main
+- The PreCheck Only checkpoint has no general/standard lane
 
 TEXT:
 ${rawText}`,
@@ -96,12 +99,17 @@ ${rawText}`,
   // Build flat row for Supabase
   const num = (v) => (typeof v === "number" ? v : null);
   const row = {
-    north_general:  num(parsed.North?.general),
-    north_precheck: num(parsed.North?.precheck),
-    south_general:  num(parsed.South?.general),
-    south_precheck: num(parsed.South?.precheck),
-    intl_general:   num(parsed.International?.general),
-    intl_precheck:  num(parsed.International?.precheck),
+    domestic_main_general:        num(parsed.Domestic_Main?.general),
+    domestic_main_precheck:       num(parsed.Domestic_Main?.precheck),
+    domestic_north_general:       num(parsed.Domestic_North?.general),
+    domestic_north_precheck:      num(parsed.Domestic_North?.precheck),
+    domestic_lower_north_general: num(parsed.Domestic_Lower_North?.general),
+    domestic_lower_north_precheck: num(parsed.Domestic_Lower_North?.precheck),
+    domestic_south_general:       num(parsed.Domestic_South?.general),
+    domestic_south_precheck:      num(parsed.Domestic_South?.precheck),
+    domestic_precheck_only:       num(parsed.Domestic_PreCheck_Only?.precheck),
+    intl_main_general:            num(parsed.Intl_Main?.general),
+    intl_main_precheck:           num(parsed.Intl_Main?.precheck),
   };
 
   // Step 3: Supabase insert via REST API

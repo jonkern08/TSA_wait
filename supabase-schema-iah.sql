@@ -1,20 +1,19 @@
 -- Houston Bush Intercontinental (IAH) wait times table
--- Run in Supabase SQL Editor (same project as JFK, Newark, LGA, and ATL)
--- 5 terminals: A, B, C, D, E
+-- Run in Supabase SQL Editor (same project as JFK, Newark, LGA, ATL)
+-- Active checkpoints: A North, A South, C North, E
+-- No active B or D checkpoints
 
 CREATE TABLE iah_wait_times (
-  id            BIGSERIAL PRIMARY KEY,
-  collected_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  ta_general    SMALLINT,
-  ta_precheck   SMALLINT,
-  tb_general    SMALLINT,
-  tb_precheck   SMALLINT,
-  tc_general    SMALLINT,
-  tc_precheck   SMALLINT,
-  td_general    SMALLINT,
-  td_precheck   SMALLINT,
-  te_general    SMALLINT,
-  te_precheck   SMALLINT
+  id                   BIGSERIAL PRIMARY KEY,
+  collected_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ta_north_general     SMALLINT,
+  ta_north_precheck    SMALLINT,
+  ta_south_general     SMALLINT,
+  ta_south_precheck    SMALLINT,
+  tc_north_general     SMALLINT,
+  tc_north_precheck    SMALLINT,
+  te_general           SMALLINT,
+  te_precheck          SMALLINT
 );
 
 CREATE INDEX iah_wait_times_collected_at_idx ON iah_wait_times (collected_at DESC);

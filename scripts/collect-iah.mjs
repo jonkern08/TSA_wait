@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Houston Bush Intercontinental (IAH)
 // Triggered by cron-job.org webhook every 20 minutes
-// 5 terminals: A, B, C, D, E
+// Active checkpoints: A North, A South, C North, E (no B or D checkpoints)
 
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
@@ -57,7 +57,7 @@ async function main() {
           role: "user",
           content: `Extract Houston Bush Intercontinental Airport (IAH) TSA security wait times. Return ONLY this JSON format:
 
-{"A":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"C":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"D":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"E":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
+{"A_North":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"A_South":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"C_North":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"E":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
 
 Rules:
 - "general" = standard screening wait in minutes (integer)
@@ -66,7 +66,8 @@ Rules:
 - Use null if unknown or not listed
 - "No Wait" or "0" = 0
 - Range like "15-30" = use higher number
-- IAH has 5 terminals: A, B, C, D, E
+- IAH active checkpoints: Terminal A North, Terminal A South, Terminal C North, Terminal E
+- Checkpoint names appear as "IAH Terminal A North Standard", "IAH Terminal A South Standard", "IAH Terminal C North PreCheck", "IAH Terminal E", etc.
 
 TEXT:
 ${rawText}`,
@@ -95,16 +96,14 @@ ${rawText}`,
   // Build flat row for Supabase
   const num = (v) => (typeof v === "number" ? v : null);
   const row = {
-    ta_general:  num(parsed.A?.general),
-    ta_precheck: num(parsed.A?.precheck),
-    tb_general:  num(parsed.B?.general),
-    tb_precheck: num(parsed.B?.precheck),
-    tc_general:  num(parsed.C?.general),
-    tc_precheck: num(parsed.C?.precheck),
-    td_general:  num(parsed.D?.general),
-    td_precheck: num(parsed.D?.precheck),
-    te_general:  num(parsed.E?.general),
-    te_precheck: num(parsed.E?.precheck),
+    ta_north_general:  num(parsed.A_North?.general),
+    ta_north_precheck: num(parsed.A_North?.precheck),
+    ta_south_general:  num(parsed.A_South?.general),
+    ta_south_precheck: num(parsed.A_South?.precheck),
+    tc_north_general:  num(parsed.C_North?.general),
+    tc_north_precheck: num(parsed.C_North?.precheck),
+    te_general:        num(parsed.E?.general),
+    te_precheck:       num(parsed.E?.precheck),
   };
 
   // Step 3: Supabase insert via REST API

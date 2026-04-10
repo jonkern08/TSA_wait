@@ -9,7 +9,7 @@ function isAuthorized(req: Request): boolean {
 }
 
 // Returns true if we should collect given the current ET time.
-// Between midnight–5am ET, only collect on :00 and :30 minutes.
+// Collect once per hour on the hour, skipping midnight–5am ET entirely.
 function shouldCollect(): boolean {
   const etTime = new Date().toLocaleString("en-US", {
     timeZone: "America/New_York",
@@ -18,9 +18,8 @@ function shouldCollect(): boolean {
   const hour = et.getHours();
   const minute = et.getMinutes();
 
-  const isOffPeak = hour >= 0 && hour < 5;
-  if (!isOffPeak) return true;
-  return minute === 0 || minute === 30;
+  if (hour >= 0 && hour < 5) return false;
+  return minute === 0;
 }
 
 export async function POST(req: Request) {
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   if (!shouldCollect()) {
-    return NextResponse.json({ skipped: true, reason: "off-peak, non-30min mark" });
+    return NextResponse.json({ skipped: true, reason: "outside collection window" });
   }
 
   const result = await fetchWaitTimes();

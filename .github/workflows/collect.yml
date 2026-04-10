@@ -1,7 +1,7 @@
 name: Collect JFK Wait Times
 
 on:
-  workflow_dispatch: # triggered by cron-job.org every 15 min via GitHub API
+  workflow_dispatch: # triggered by cron-job.org hourly from 5am-11pm ET via GitHub API
 
 jobs:
   collect:

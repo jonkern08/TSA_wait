@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for LaGuardia (LGA)
-// Triggered by cron-job.org webhook every 20 minutes
+// Triggered by cron-job.org webhook hourly during the daytime
 // 4 terminals: A, B, C, D
 
 function shouldCollect() {
@@ -8,14 +8,13 @@ function shouldCollect() {
   const et = new Date(etTime);
   const hour = et.getHours();
   const minute = et.getMinutes();
-  const isOffPeak = hour >= 0 && hour < 5;
-  if (!isOffPeak) return true;
-  return minute === 0 || minute === 30;
+  if (hour >= 0 && hour < 5) return false;
+  return minute === 0;
 }
 
 async function main() {
   if (!shouldCollect()) {
-    console.log("Off-peak, non-30min mark — skipping.");
+    console.log("Outside collection window — skipping.");
     return;
   }
 

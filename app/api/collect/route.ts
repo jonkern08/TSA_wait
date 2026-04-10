@@ -8,23 +8,9 @@ function isAuthorized(req: Request): boolean {
   return token === process.env.COLLECT_SECRET;
 }
 
-// Returns true if we should collect given the current ET time.
-// Collect once per hour on the hour.
-function shouldCollect(): boolean {
-  const etTime = new Date().toLocaleString("en-US", {
-    timeZone: "America/New_York",
-  });
-  const et = new Date(etTime);
-  return et.getMinutes() === 0;
-}
-
 export async function POST(req: Request) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!shouldCollect()) {
-    return NextResponse.json({ skipped: true, reason: "outside collection window" });
   }
 
   const result = await fetchWaitTimes();

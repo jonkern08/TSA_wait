@@ -4,18 +4,7 @@
 
 const TERMINALS = ["T1", "T4", "T5", "T7", "T8"];
 
-function shouldCollect() {
-  const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-  const et = new Date(etTime);
-  return et.getMinutes() === 0;
-}
-
 async function main() {
-  if (!shouldCollect()) {
-    console.log("Outside collection window — skipping.");
-    return;
-  }
-
   // Step 1: Firecrawl scrape
   const scrapeRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",

@@ -1,20 +1,9 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Houston Bush Intercontinental (IAH)
-// Triggered by cron-job.org webhook hourly
+// Triggered by cron-job.org webhook on the schedule configured outside the repo
 // Active checkpoints: A North, A South, C North, E (no B or D checkpoints)
 
-function shouldCollect() {
-  const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-  const et = new Date(etTime);
-  return et.getMinutes() === 0;
-}
-
 async function main() {
-  if (!shouldCollect()) {
-    console.log("Outside collection window — skipping.");
-    return;
-  }
-
   // Step 1: Firecrawl scrape
   const scrapeRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",

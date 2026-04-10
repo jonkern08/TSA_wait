@@ -1,20 +1,9 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Newark (EWR)
-// Triggered by cron-job.org webhook hourly
+// Triggered by cron-job.org webhook on the schedule configured outside the repo
 // Terminal B has 3 separate checkpoints: B1 (gates 40-49), B2 (51-57), B3 (60-68)
 
-function shouldCollect() {
-  const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-  const et = new Date(etTime);
-  return et.getMinutes() === 0;
-}
-
 async function main() {
-  if (!shouldCollect()) {
-    console.log("Outside collection window — skipping.");
-    return;
-  }
-
   // Step 1: Firecrawl scrape
   const scrapeRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",

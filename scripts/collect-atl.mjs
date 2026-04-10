@@ -1,22 +1,11 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Atlanta Hartsfield-Jackson (ATL)
-// Triggered by cron-job.org webhook hourly
+// Triggered by cron-job.org webhook on the schedule configured outside the repo
 // Domestic checkpoints: Main, North, Lower North, South, PreCheck Only
 // International checkpoint: Main
 // NOTE: atl.com uses Cloudflare — if scraping fails, may need Firecrawl's stealth mode
 
-function shouldCollect() {
-  const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-  const et = new Date(etTime);
-  return et.getMinutes() === 0;
-}
-
 async function main() {
-  if (!shouldCollect()) {
-    console.log("Outside collection window — skipping.");
-    return;
-  }
-
   // Step 1: Firecrawl scrape
   const scrapeRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",

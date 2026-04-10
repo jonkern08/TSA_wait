@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Airport TSA Wait Time Tracker
 
-## Getting Started
+A Next.js app that displays recent TSA checkpoint wait times collected from public airport websites and stored in Supabase.
 
-First, run the development server:
+Currently included:
+
+- JFK
+- Newark
+- LaGuardia
+- Atlanta
+- Houston IAH
+
+## Stack
+
+- Next.js
+- React
+- Supabase
+- Firecrawl
+- OpenAI
+- GitHub Actions
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create a local env file:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Fill in the required values in `.env.local`:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `FIRECRAWL_API_KEY`
+- `OPENAI_API_KEY`
+- `COLLECT_SECRET`
+
+4. Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Notes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `.env.local` is ignored and should never be committed.
+- `.vercel/` is ignored and contains local Vercel linkage metadata.
+- GitHub Actions expect the same secrets to be configured in the repository settings.
 
-## Learn More
+## Data Collection
 
-To learn more about Next.js, take a look at the following resources:
+Collection scripts live in [`scripts/collect.mjs`](/Users/jkern/Documents/repos/jfk-webapp/scripts/collect.mjs) and the related airport-specific files in [`scripts/`](/Users/jkern/Documents/repos/jfk-webapp/scripts).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app also exposes:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- history endpoints under [`app/api/`](/Users/jkern/Documents/repos/jfk-webapp/app/api)
+- a protected collect endpoint at [`app/api/collect/route.ts`](/Users/jkern/Documents/repos/jfk-webapp/app/api/collect/route.ts)
+- a health endpoint at [`app/api/health/route.ts`](/Users/jkern/Documents/repos/jfk-webapp/app/api/health/route.ts)
 
-## Deploy on Vercel
+## Before Making The Repo Public
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Confirm `.env.local` is still untracked with `git status --short`.
+- Confirm GitHub Actions secrets are set in the repository before enabling workflows.
+- If any real secrets were ever committed in a previous branch or clone, rewrite history before publishing.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+Add a license before publishing publicly if you want to define reuse terms.

@@ -80,7 +80,7 @@ ${rawText}`,
   }
 
   const extractData = await extractRes.json();
-  let jsonText: string = (extractData.choices || [])
+  const jsonText: string = (extractData.choices || [])
     .map((c: { message?: { content?: string } }) => c.message?.content || "")
     .join("")
     .replace(/```json|```/g, "")

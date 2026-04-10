@@ -7,10 +7,7 @@ const TERMINALS = ["T1", "T4", "T5", "T7", "T8"];
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
   const et = new Date(etTime);
-  const hour = et.getHours();
-  const minute = et.getMinutes();
-  if (hour >= 0 && hour < 5) return false;
-  return minute === 0;
+  return et.getMinutes() === 0;
 }
 
 async function main() {

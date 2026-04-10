@@ -1,7 +1,7 @@
 name: Collect Newark Wait Times
 
 on:
-  workflow_dispatch: # triggered by cron-job.org hourly from 5am-11pm ET via GitHub API
+  workflow_dispatch: # triggered by cron-job.org hourly via GitHub API
 
 jobs:
   collect:

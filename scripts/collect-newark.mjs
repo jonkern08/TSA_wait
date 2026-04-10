@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Newark (EWR)
-// Triggered by cron-job.org webhook hourly during the daytime
+// Triggered by cron-job.org webhook hourly
 // Terminal B has 3 separate checkpoints: B1 (gates 40-49), B2 (51-57), B3 (60-68)
 
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
   const et = new Date(etTime);
-  const hour = et.getHours();
-  const minute = et.getMinutes();
-  if (hour >= 0 && hour < 5) return false;
-  return minute === 0;
+  return et.getMinutes() === 0;
 }
 
 async function main() {

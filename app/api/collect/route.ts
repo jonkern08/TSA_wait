@@ -9,17 +9,13 @@ function isAuthorized(req: Request): boolean {
 }
 
 // Returns true if we should collect given the current ET time.
-// Collect once per hour on the hour, skipping midnight–5am ET entirely.
+// Collect once per hour on the hour.
 function shouldCollect(): boolean {
   const etTime = new Date().toLocaleString("en-US", {
     timeZone: "America/New_York",
   });
   const et = new Date(etTime);
-  const hour = et.getHours();
-  const minute = et.getMinutes();
-
-  if (hour >= 0 && hour < 5) return false;
-  return minute === 0;
+  return et.getMinutes() === 0;
 }
 
 export async function POST(req: Request) {

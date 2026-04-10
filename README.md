@@ -54,7 +54,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - `.env.local` is ignored and should never be committed.
 - `.vercel/` is ignored and contains local Vercel linkage metadata.
 - GitHub Actions expect the same secrets to be configured in the repository settings.
-- Collection is intended to run hourly from 5am-11pm ET, with overnight collection disabled.
+- Collection is intended to run hourly, with cron jobs staggered so the airports do not all hit at the same minute.
 
 ## Data Collection
 

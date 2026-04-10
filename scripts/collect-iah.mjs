@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 // Firecrawl → OpenAI → Supabase collection script for Houston Bush Intercontinental (IAH)
-// Triggered by cron-job.org webhook hourly during the daytime
+// Triggered by cron-job.org webhook hourly
 // Active checkpoints: A North, A South, C North, E (no B or D checkpoints)
 
 function shouldCollect() {
   const etTime = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
   const et = new Date(etTime);
-  const hour = et.getHours();
-  const minute = et.getMinutes();
-  if (hour >= 0 && hour < 5) return false;
-  return minute === 0;
+  return et.getMinutes() === 0;
 }
 
 async function main() {

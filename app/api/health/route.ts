@@ -3,7 +3,7 @@ import { getSupabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-const MAX_AGE_MINUTES = 41;
+const MAX_AGE_MINUTES = 62;
 
 const SOURCES = [
   { airport: "JFK", table: "wait_times" },

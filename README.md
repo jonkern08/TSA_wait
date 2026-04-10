@@ -66,6 +66,8 @@ The app also exposes:
 - a protected collect endpoint at `app/api/collect/route.ts`
 - a health endpoint at `app/api/health/route.ts`
 
+The health endpoint returns `503` when any monitored airport has not written a fresh row in the last 62 minutes. This is intended for an external monitor such as cron-job.org.
+
 ## Before Making The Repo Public
 
 - Confirm `.env.local` is still untracked with `git status --short`.

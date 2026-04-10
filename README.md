@@ -57,13 +57,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Data Collection
 
-Collection scripts live in [`scripts/collect.mjs`](/Users/jkern/Documents/repos/jfk-webapp/scripts/collect.mjs) and the related airport-specific files in [`scripts/`](/Users/jkern/Documents/repos/jfk-webapp/scripts).
+Collection scripts live in `scripts/collect.mjs` and the related airport-specific files in `scripts/`.
 
 The app also exposes:
 
-- history endpoints under [`app/api/`](/Users/jkern/Documents/repos/jfk-webapp/app/api)
-- a protected collect endpoint at [`app/api/collect/route.ts`](/Users/jkern/Documents/repos/jfk-webapp/app/api/collect/route.ts)
-- a health endpoint at [`app/api/health/route.ts`](/Users/jkern/Documents/repos/jfk-webapp/app/api/health/route.ts)
+- history endpoints under `app/api/`
+- a protected collect endpoint at `app/api/collect/route.ts`
+- a health endpoint at `app/api/health/route.ts`
 
 ## Before Making The Repo Public
 

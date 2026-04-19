@@ -3,19 +3,72 @@
 // Triggered by cron-job.org webhook on the schedule configured outside the repo
 // Terminal B has 3 separate checkpoints: B1 (gates 40-49), B2 (51-57), B3 (60-68)
 
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 5_000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function withRetries(label, fn, attempts = MAX_ATTEMPTS) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (attempt === attempts) break;
+
+      console.warn(`${label} attempt ${attempt}/${attempts} failed: ${message}`);
+      await sleep(RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw new Error(
+    `${label} failed after ${attempts} attempts: ${
+      lastError instanceof Error ? lastError.message : String(lastError)
+    }`
+  );
+}
+
 async function main() {
   // Step 1: Firecrawl scrape
-  const scrapeRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`,
-    },
-    body: JSON.stringify({
-      url: "https://www.newarkairport.com/",
-      actions: [{ type: "wait", milliseconds: 3000 }],
-    }),
-  });
+  const scrapeRes = await withRetries("Firecrawl scrape", () =>
+    fetchWithTimeout("https://api.firecrawl.dev/v2/scrape", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`,
+      },
+      body: JSON.stringify({
+        url: "https://www.newarkairport.com/",
+        actions: [{ type: "wait", milliseconds: 3000 }],
+      }),
+    })
+  );
 
   if (!scrapeRes.ok) throw new Error(`Firecrawl HTTP ${scrapeRes.status}`);
   const scrapeData = await scrapeRes.json();
@@ -23,24 +76,25 @@ async function main() {
   if (!rawText || rawText.length < 20) throw new Error("Firecrawl returned no content");
 
   // Step 2: OpenAI extraction
-  const extractRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      max_tokens: 500,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a data extraction assistant. Respond with ONLY a valid JSON object. No markdown, no backticks, no explanation. Just JSON. Use null for unknown values.",
-        },
-        {
-          role: "user",
-          content: `Extract Newark Liberty International Airport (EWR) TSA security wait times. Return ONLY this JSON format:
+  const extractRes = await withRetries("OpenAI extraction", () =>
+    fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 500,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a data extraction assistant. Respond with ONLY a valid JSON object. No markdown, no backticks, no explanation. Just JSON. Use null for unknown values.",
+          },
+          {
+            role: "user",
+            content: `Extract Newark Liberty International Airport (EWR) TSA security wait times. Return ONLY this JSON format:
 
 {"A":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B1":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B2":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"B3":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN},"C":{"general":NUMBER_OR_NULL,"precheck":NUMBER_OR_NULL,"closed":BOOLEAN}}
 
@@ -56,10 +110,11 @@ Rules:
 
 TEXT:
 ${rawText}`,
-        },
-      ],
-    }),
-  });
+          },
+        ],
+      }),
+    })
+  );
 
   if (!extractRes.ok) throw new Error(`OpenAI HTTP ${extractRes.status}`);
   const extractData = await extractRes.json();
@@ -94,16 +149,18 @@ ${rawText}`,
   };
 
   // Step 3: Supabase insert via REST API
-  const insertRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/newark_wait_times`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      Prefer: "return=minimal",
-    },
-    body: JSON.stringify(row),
-  });
+  const insertRes = await withRetries("Supabase insert", () =>
+    fetchWithTimeout(`${process.env.SUPABASE_URL}/rest/v1/newark_wait_times`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(row),
+    })
+  );
 
   if (!insertRes.ok) {
     const err = await insertRes.text();
